@@ -4,7 +4,7 @@ import logging
 from distutils.util import strtobool
 
 class Config:
-    # Google Sheets Configuration (Check environment variables first, then fall back to file)
+    # Google Sheets Configuration
     GOOGLE_SHEETS_CREDENTIALS = None
 
     def load_google_sheets_credentials():
@@ -15,7 +15,7 @@ class Config:
                 "private_key_id": os.getenv('GOOGLE_SHEETS_PRIVATE_KEY_ID', ''),
                 "private_key": os.getenv('GOOGLE_SHEETS_PRIVATE_KEY', '').replace('\\n', '\n'),
                 "client_email": os.getenv('GOOGLE_SHEETS_CLIENT_EMAIL', ''),
-            "client_id": os.getenv('GOOGLE_SHEETS_CLIENT_ID', ''),
+                "client_id": os.getenv('GOOGLE_SHEETS_CLIENT_ID', ''),
                 "auth_uri": os.getenv('GOOGLE_SHEETS_AUTH_URI', 'https://accounts.google.com/o/oauth2/auth'),
                 "token_uri": os.getenv('GOOGLE_SHEETS_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
                 "auth_provider_x509_cert_url": os.getenv('GOOGLE_SHEETS_AUTH_PROVIDER_X509_CERT_URL', 'https://www.googleapis.com/oauth2/v1/certs'),
@@ -44,9 +44,12 @@ class Config:
     logging.basicConfig(level=LOG_LEVEL)
 
     # LLM Configuration
+    LLM_MODEL = os.getenv('LLM_MODEL', 'gemini')  # Default to Gemini
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    LLM_MODEL = os.getenv('LLM_MODEL')
-    USE_OPENAI_API = strtobool(os.getenv('USE_OPENAI_API', 'True'))
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')  # Specific OpenAI model
+    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-pro')  # Specific Gemini model
+    USE_OPENAI_API = strtobool(os.getenv('USE_OPENAI_API', 'False'))  # Legacy flag, defaults to False
 
     # PDF.co Configuration
     PDFCO_API_KEY = os.getenv('PDFCO_API_KEY')
@@ -75,8 +78,13 @@ class Config:
     @classmethod
     def validate_config(cls):
         """Raise errors if critical configurations are missing."""
-        if cls.ENABLE_LLM_SERVICE and not cls.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY must be set in the environment.")
+        if cls.ENABLE_LLM_SERVICE:
+            if cls.LLM_MODEL == 'openai' and not cls.OPENAI_API_KEY:
+                raise ValueError("OPENAI_API_KEY must be set when LLM_MODEL is 'openai'.")
+            elif cls.LLM_MODEL == 'gemini' and not cls.GEMINI_API_KEY:
+                raise ValueError("GEMINI_API_KEY must be set when LLM_MODEL is 'gemini'.")
+            elif cls.LLM_MODEL not in ['openai', 'gemini']:
+                raise ValueError("LLM_MODEL must be either 'openai' or 'gemini'.")
         if cls.ENABLE_PDF_SERVICE and not cls.PDFCO_API_KEY:
             raise ValueError("PDFCO_API_KEY must be set in the environment.")
         if cls.ENABLE_EMAIL_SERVICE and (not cls.PROTONMAIL_ADDRESS or not cls.PROTONMAIL_PASSWORD):
