@@ -112,18 +112,14 @@ logger.info("UtilitiesService is initialized.")
 
 # Initialize the ReportGenerator if LLM service is enabled
 report_generator = None
-if llm_service:
+if llm_service and llm_service.report_generator:
     try:
-        report_generator = ReportGenerator(
-            client=llm_service.client,
-            model=llm_service.model,
-            utilities_service=utilities_service
-        )
-        logger.info("ReportGenerator is initialized with LLM service.")
+        report_generator = llm_service.report_generator
+        logger.info("ReportGenerator is initialized via LLMService.")
     except Exception as e:
         logger.error(f"Failed to initialize ReportGenerator: {e}", exc_info=True)
 else:
-    logger.info("ReportGenerator is not initialized because LLM service is disabled.")
+    logger.info("ReportGenerator is not initialized because LLM service is disabled or not configured.")
 
 @app.errorhandler(HTTPException)
 def handle_http_exception(e):
