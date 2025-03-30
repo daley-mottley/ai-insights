@@ -1,53 +1,36 @@
 import logging
 from typing import List
 from services.utilities_service import UtilitiesService
-from openai import OpenAI
 from config import Config
 
 logger = logging.getLogger(__name__)
 
-
 class ReportGenerator:
-
-    def __init__(self, client=None, model=None, utilities_service=None):
-        self.client = client
-        self.model = model
+    def __init__(self, llm_service=None, utilities_service=None):
+        self.llm_service = llm_service
         self.util = utilities_service
 
-    def generate_report_content(self, industry: str, answers: List[str],
-                                user_name: str) -> str:
+    def generate_report_content(self, industry: str, answers: List[str], user_name: str) -> str:
         # Capitalize the user's name
         user_name = user_name.capitalize()
 
-        if not self.client:
-            logger.info(
-                'LLM API usage is disabled. Returning mock report content.')
+        if not self.llm_service or not self.llm_service.client:
+            logger.info('LLM service is disabled or not initialized. Returning mock report content.')
             return self.generate_mock_report(industry, answers)
 
         try:
             prompt = self.build_prompt(industry, answers, user_name)
-            logger.debug('Generating report content with LLM API')
+            logger.debug('Generating report content with LLM service')
 
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{
-                    "role": "system",
-                    "content": "You are a helpful assistant."
-                }, {
-                    "role": "user",
-                    "content": prompt
-                }],
-                max_tokens=1500)
-            report_content = response.choices[0].message.content
-
+            # Use the unified generate_text method from LLMService
+            report_content = self.llm_service.generate_text(prompt)
             logger.info('Report content generated successfully')
             html_body_content = self.extract_html(report_content)
             logger.info('HTML content extracted from the response')
             styled_html_content = self.inject_styles(html_body_content)
             return styled_html_content
         except Exception as e:
-            logger.error(f'Error generating report content: {e}',
-                         exc_info=True)
+            logger.error(f'Error generating report content: {e}', exc_info=True)
             return ""
 
     def inject_styles(self, html_content: str) -> str:
@@ -194,16 +177,15 @@ footer p {
         </body></html>
         """
 
-    def build_prompt(self, industry: str, answer: List[str],
-                     user_name) -> str:
+    def build_prompt(self, industry: str, answers: List[str], user_name: str) -> str:
         return f"""
         ### Instruction:
 As an AI consultant specializing in business and entrepreneurship, your task is to develop a strategic operational plan for integrating artificial intelligence into the user's business operations within the {industry} industry.
 
 ### Business Overview:
-- **Objectives**: The primary objectives for AI integration are to {answer[0]}.
-- **Current Technology and Data**: The business currently uses {answer[1]}, and AI will need to integrate with these existing systems and data.
-- **Workforce and Training Needs**: The team’s skill level is currently at {answer[2]}, and they will require training to effectively use AI.
+- **Objectives**: The primary objectives for AI integration are to {answers[0]}.
+- **Current Technology and Data**: The business currently uses {answers[1]}, and AI will need to integrate with these existing systems and data.
+- **Workforce and Training Needs**: The team’s skill level is currently at {answers[2]}, and they will require training to effectively use AI.
 
 ### Industry Trends:
 - **Current Trends in {industry}**: Identify and analyze the latest trends in the {industry} industry that may impact or benefit from AI integration.
@@ -240,135 +222,133 @@ As an AI consultant specializing in business and entrepreneurship, your task is 
 - **Additional Recommendations**: Offer extra insights or suggest emerging technologies that might be relevant to the business.
 - **Conclusion**: Summarize the expected impact of AI integration on business operations.
 
+Ensure the report is structured professionally, with clear headings and well-organized content.
 
-        Ensure the report is structured professionally, with clear headings and well-organized content. 
+The report should be in the following format embedded in HTML code with the brackets filled in with the appropriate content:
 
-        The report should be in the following format embedded in HTML code with the brackets filled in with the appropriate content:
-
-        ## Format
-        ```
-        <body>
+## Format
+```
+<body>
     <header>
         <div class="header-content">
             <p><a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a></p>
             <h1>AI Insights Report</h1>
             <p class="sub-title">Prepared for</p>
-            <h3>{ user_name }</h3>
+            <h3>{user_name}</h3>
         </div>
     </header>
 
-    <div class="container">
-        <section>
-            <h2>Introduction</h2>
-            <p>{{ executive_summary }}</p>
-        </section>
+<div class="container">
+    <section>
+        <h2>Introduction</h2>
+        <p>{{executive_summary}}</p>
+    </section>
 
-        <section>
-            <h2>Industry Trends</h2>
-            <p>{{ industry_trends }}</p>
-        </section>
+    <section>
+        <h2>Industry Trends</h2>
+        <p>{{industry_trends}}</p>
+    </section>
 
-        <section>
-            <h2>Technology Integration</h2>
-            <p>{{ technology_integration }}</p>
-        </section>
+    <section>
+        <h2>Technology Integration</h2>
+        <p>{{technology_integration}}</p>
+    </section>
 
-        <section>
-            <h2>Workforce Training</h2>
-            <p>{{ workforce_training }}</p>
-        </section>
+    <section>
+        <h2>Workforce Training</h2>
+        <p>{{workforce_training}}</p>
+    </section>
 
-        <section>
-            <h2>Data Management</h2>
-            <p>{{ data_management }}</p>
-        </section>
+    <section>
+        <h2>Data Management</h2>
+        <p>{{data_management}}</p>
+    </section>
 
-        <section>
-            <h2>Risk & Challenges</h2>
-            <p>{{ risk_And_challenges }}</p>
-        </section>
+    <section>
+        <h2>Risk & Challenges</h2>
+        <p>{{risk_and_challenges}}</p>
+    </section>
 
-        <section>
-            <h2>Additional Recommendations</h2>
-            <p>{{ additional_recommendations }}</p>
-        </section>
+    <section>
+        <h2>Additional Recommendations</h2>
+        <p>{{additional_recommendations}}</p>
+    </section>
 
-        <section>
-            <h2>Conclusion</h2>
-            <p>{{ conclusion }}</p>
-        </section>
+    <section>
+        <h2>Conclusion</h2>
+        <p>{{conclusion}}</p>
+    </section>
 
-        <section class="cta">
-            <h2>Ready to Implement AI in Your Business?</h2>
-            <p>Contact <a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> for expert guidance on how AI can transform your business. Let us help you stay ahead of the competition with cutting-edge AI solutions.</p>
-            <a href="https://dmotts.github.io/portfolio/" class="cta-btn">Learn More</a>
-        </section>
-    </div>
+    <section class="cta">
+        <h2>Ready to Implement AI in Your Business?</h2>
+        <p>Contact <a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> for expert guidance on how AI can transform your business. Let us help you stay ahead of the competition with cutting-edge AI solutions.</p>
+        <a href="https://dmotts.github.io/portfolio/" class="cta-btn">Learn More</a>
+    </section>
+</div>
 
-    <footer>
-        <p><a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> | All Rights Reserved &copy; { self.util.get_current_year() }</p>
-    </footer>
+<footer>
+    <p><a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> | All Rights Reserved © {self.util.get_current_year() if self.util else '2025'}</p>
+</footer>
 </body>
-        ```       
-        """
+```
+"""
+def extract_html(self, content: str) -> str:
+    """
+    Extracts HTML content from the LLM response.
+    Assumes the content is wrapped in a ```html block or contains <body> tags.
+    """
+    start = content.find("<body>")
+    end = content.find("</body>") + len("</body>") if content.find("</body>") != -1 else -1
+    if start == -1 or end == -1:
+        logger.error("HTML content not found in the response; returning raw content as fallback")
+        return content  # Fallback to returning the whole content
+    return content[start:end]
 
-    def extract_html(self, content: str) -> str:
-        """
-        Extracts HTML content from the LLM response.
-        Assumes the content is wrapped in a ```html block.
-        """
-        start = content.find("<body>")
-        end = content.find("</body>") + len("</body>")
-        if start == -1 or end == -1:
-            logger.error("HTML content not found in the response")
-            return content  # Fallback to returning the whole content
-        return content[start:end]
+def generate_mock_report(self, industry: str, answers: List[str]) -> str:
+    """Generates a mock report for testing without using the LLM API."""
+    mock_content = f"""
+    <body>
+        <header>
+            <p>Daley Mottley AI Consulting</p>
+            <h1>AI Insights Report - Mock</h1>
+        </header>
 
-    def generate_mock_report(self, industry: str, answers: List[str]) -> str:
-        """Generates a mock report for testing without using the LLM API."""
-        mock_content = f"""
-        <body>
-            <header>
-                <p>Daley Mottley AI Consulting</p>
-                <h1>AI Insights Report - Mock</h1>
-            </header>
+        <div class="container">
+            <section>
+                <h2>Introduction</h2>
+                <p>This is a mock introduction for the {industry} industry.</p>
+            </section>
 
-            <div class="container">
-                <section>
-                    <h2>Introduction</h2>
-                    <p>This is a mock introduction for the {industry} industry.</p>
-                </section>
+            <section>
+                <h2>Industry Trends</h2>
+                <p>Mock trends for the {industry} industry.</p>
+            </section>
 
-                <section>
-                    <h2>Industry Trends</h2>
-                    <p>Mock trends for the {industry} industry.</p>
-                </section>
+            <section>
+                <h2>AI Solutions</h2>
+                <p>Mock solutions based on provided answers: {', '.join(answers)}.</p>
+            </section>
 
-                <section>
-                    <h2>AI Solutions</h2>
-                    <p>Mock solutions based on provided answers: {answers}.</p>
-                </section>
+            <section>
+                <h2>Analysis</h2>
+                <p>Mock analysis and recommendations.</p>
+            </section>
 
-                <section>
-                    <h2>Analysis</h2>
-                    <p>Mock analysis and recommendations.</p>
-                </section>
+            <section>
+                <h2>Conclusion</h2>
+                <p>Mock conclusion and next steps.</p>
+            </section>
 
-                <section>
-                    <h2>Conclusion</h2>
-                    <p>Mock conclusion and next steps.</p>
-                </section>
+            <section class="cta">
+                <h2>Ready to Implement AI in Your Business?</h2>
+                <p>Contact <a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> for expert guidance on how AI can transform your business. Let us help you stay ahead of the competition with cutting-edge AI solutions.</p>
+                <a href="https://dmotts.github.io/portfolio/" class="cta-btn">Learn More</a>
+            </section>
+        </div>
 
-                <section class="cta">
-                    <h2>Ready to Implement AI in Your Business?</h2>
-                    <p>Contact <a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> for expert guidance on how AI can transform your business. Let us help you stay ahead of the competition with cutting-edge AI solutions.</p>
-                    <a href="https://dmotts.github.io/portfolio/" class="cta-btn">Learn More</a>
-                </section>
-            </div>
-
-            <footer>
-                <p><a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> | All Rights Reserved &copy; { self.util.get_current_year() }</p>
-            </footer>
-        </body>
-        """
-        return self.inject_styles(mock_content)
+        <footer>
+            <p><a href="https://dmotts.github.io/portfolio/">Daley Mottley AI Consulting</a> | All Rights Reserved © {self.util.get_current_year() if self.util else '2025'}</p>
+        </footer>
+    </body>
+    """
+    return self.inject_styles(mock_content)
