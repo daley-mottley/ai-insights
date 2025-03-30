@@ -4,11 +4,11 @@ AI Insights <br> Report Generator <br> 🥸</span>
 
 <div align="center">
 <p align="center">
-<a href="https://github.com/dmotts/ai-insights/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml&title=%5BFeature+Request%5D+">Request Feature</a>
+<a href="https://github.com/daley-mottley/ai-insights/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml&title=%5BFeature+Request%5D+">Request Feature</a>
      ·
     <a href="https://ai-insights-production.up.railway.app/" target="blank">View Demo</a>
     ·
-    <a href="https://github.com/dmotts/ai-insights/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml&title=%5BBug%5D+">Report Bug</a>
+    <a href="https://github.com/daley-mottley/ai-insights/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml&title=%5BBug%5D+">Report Bug</a>
  
 </p>
 
@@ -16,25 +16,31 @@ AI Insights <br> Report Generator <br> 🥸</span>
 </div>
 
 ## Project Overview 🧐
-AI Insights is a web-based application designed to provide valuable insights for your business using AI-driven analytics. The application leverages multiple data sources to deliver comprehensive reports and visualizations, helping users make data-driven decisions with ease.
+AI Insights is a web-based application designed to provide valuable insights for your business using AI-driven analytics. The application leverages multiple data sources to deliver comprehensive reports and visualizations, helping users make data-driven decisions with ease. By default, it uses Google’s Gemini model (`gemini-1.5-pro`) for AI capabilities, with OpenAI as an optional alternative.
 
 ## Setup Instructions 📄
 
 ### Prerequisites 
 - Python 3.x
-- Poetry package manager
+- Poetry package manager (recommended) or pip
 - Google Sheets API credentials (either through environment variables or a `credentials.json` file)
+- Google Gemini API Key (required for default functionality)
+- OpenAI API Key (optional, if using OpenAI instead of Gemini)
 
 ### Installation
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/dmotts/ai-insights.git
+   # Clones the ai-insights repository from GitHub to your local machine
+   git clone https://github.com/daley-mottley/ai-insights.git
+   # Changes the current directory to the cloned repository
    cd ai-insights
    ```
 
 2. **Install dependencies:**
    ```bash
+   # Installs the project dependencies listed in requirements.txt using pip
+   # Note: Poetry is preferred (run `poetry install` instead) as it aligns with pyproject.toml
    pip install -r requirements.txt
    ```
 
@@ -51,7 +57,9 @@ AI Insights is a web-based application designed to provide valuable insights for
    - `GOOGLE_SHEETS_TOKEN_URI`
    - `GOOGLE_SHEETS_AUTH_PROVIDER_X509_CERT_URL`
    - `GOOGLE_SHEETS_CLIENT_X509_CERT_URL`
-   - `OPENAI_API_KEY`
+   - `GEMINI_API_KEY` (required for default Gemini model)
+   - `OPENAI_API_KEY` (optional, required if using OpenAI)
+   - `LLM_MODEL` (optional, set to `'openai'` to use OpenAI; defaults to `'gemini'`)
    - `PROTONMAIL_ADDRESS`
    - `PROTONMAIL_PASSWORD`
    - `MONGODB_URI`
@@ -60,11 +68,14 @@ AI Insights is a web-based application designed to provide valuable insights for
 
 4. **Run the application:**
    ```bash
+   # Launches the Flask application using Python, defaulting to port 5000
    python app.py
    ```
 
 5. **Access the application:**
    Open your web browser and go to `http://localhost:5000` to view the application.
+
+**Note:** The application uses Google’s Gemini model (`gemini-1.5-pro`) by default for AI-driven report generation. To switch to OpenAI (e.g., `gpt-3.5-turbo`), set `LLM_MODEL=openai` and provide an `OPENAI_API_KEY` in your environment variables.
 
 ## Contributions 🧑‍🔧👷‍♀️🏗️🏢
 
@@ -82,8 +93,7 @@ To contribute:
 
 5) Open a pull request.
 
-<p align="center" ><strong><em>Please read our <a href="https://github.com/dmotts/ai-insights/blob/main/CONTRIBUTION.md" >Contributing Guidelines</a> to get started!</em></strong> 🚀</p>
-
+<p align="center" ><strong><em>Please read our <a href="https://github.com/daley-mottley/ai-insights/blob/main/CONTRIBUTION.md" >Contributing Guidelines</a> to get started!</em></strong> 🚀</p>
 
 <p align="center">🫶 <em>Thank you for your support! </em>🙌 </p>
 <hr>
@@ -91,5 +101,3 @@ To contribute:
 
 <p align="center"> If you like this project and would like to see more features or show your support.</p>
 <p align="center"> Feel free to reach out to the developer(s) and give this project a ⭐!</p>
-
-
